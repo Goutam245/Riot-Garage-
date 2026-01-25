@@ -376,7 +376,7 @@
             line-height: 1.1; /* TIGHTER line height */
         }
 
-        /* DIAL - Upper Right Position */
+        /* DIAL - Static Arrow Version */
         .dial-container {
             position: absolute;
             top: 80px;
@@ -387,15 +387,33 @@
             cursor: help;
         }
 
-        .dial-image {
+        /* Fixed Dial Arrow - Never Rotates */
+        .dial-arrow {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 20px solid #B87333;
+            z-index: 102;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        /* Dial Background - Static */
+        .dial-background {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .dial-bg-image {
             width: 100%;
             height: 100%;
             object-fit: contain;
-            transition: transform 0.3s ease;
-        }
-
-        .dial-container:hover .dial-image {
-            transform: rotate(5deg) scale(1.05);
+            /* NO TRANSITION, NO ROTATION */
         }
 
         .dial-tooltip {
@@ -419,6 +437,25 @@
 
         .dial-container:hover .dial-tooltip {
             opacity: 1;
+        }
+
+        /* Active Step Highlight on Dial */
+        .step-highlight {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: rgba(184, 115, 51, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 0.9rem;
+            transform: translate(-50%, -50%);
+            z-index: 101;
+            border: 2px solid white;
+            box-shadow: 0 0 10px rgba(184, 115, 51, 0.5);
         }
 
         /* INTERVENTION ZONE */
@@ -1112,14 +1149,19 @@
             <h2 class="section-title">The Riot Line™</h2>
             <p class="section-subtitle" style="color: var(--text-secondary); margin-bottom: 2rem;">A continuous journey of chemical precision — click any step to explore</p>
             
-            <!-- DIAL - Upper Right Position -->
+            <!-- DIAL - Static Arrow Version -->
             <div class="dial-container">
-                <img 
-                    src="riot-dial-8step.png" 
-                    alt="8 Step Maintenance Cycle" 
-                    class="dial-image"
-                    id="dialImage"
-                />
+                <!-- Static Dial Background -->
+                <div class="dial-background">
+                    <img src="riot-dial-8step.png" alt="8 Step Maintenance Cycle" class="dial-bg-image">
+                </div>
+                
+                <!-- Fixed Arrow (Never Rotates) -->
+                <div class="dial-arrow">
+                    <div class="arrow-head"></div>
+                </div>
+                
+                <!-- Tooltip (Keep as is) -->
                 <div class="dial-tooltip">
                     The Maintenance Cycle<br>
                     Vehicle care isn't a one-time task.<br>
@@ -1572,7 +1614,7 @@
         const arrowVisualization = document.getElementById('arrowVisualization');
         const arrowDescription = document.getElementById('arrowDescription');
         const goBagCounter = document.getElementById('goBagCounter');
-        const dialImage = document.getElementById('dialImage');
+        const dialImage = document.querySelector('.dial-bg-image');
 
         // ==================== INITIALIZATION ====================
         document.addEventListener('DOMContentLoaded', function() {
@@ -1583,6 +1625,9 @@
             
             // Set initial state
             state.activeStep = 1;
+            
+            // Set initial dial highlight for Step 1
+            updateDialHighlight(1);
             
             // Header scroll effect
             window.addEventListener('scroll', handleHeaderScroll);
@@ -1687,9 +1732,8 @@
             });
             document.querySelector(`.step-card[data-step="${stepId}"]`).classList.add('active');
             
-            // Rotate dial to show active step
-            const rotation = (stepId - 1) * 45; // 45 degrees per step
-            dialImage.style.transform = `rotate(${rotation}deg)`;
+            // Update dial highlight (NO ROTATION)
+            updateDialHighlight(stepId);
             
             // Hide arrow visualization
             arrowVisualization.classList.remove('active');
@@ -1713,6 +1757,29 @@
                     block: 'nearest' 
                 });
             }
+        }
+
+        function updateDialHighlight(stepId) {
+            // Remove existing highlight
+            const oldHighlight = document.querySelector('.step-highlight');
+            if (oldHighlight) oldHighlight.remove();
+            
+            // Calculate position on dial (45° per step, 0° at top)
+            const radius = 70; // Distance from center
+            const angle = (stepId - 1) * (Math.PI / 4); // Convert to radians (45° per step)
+            
+            // Convert polar to cartesian coordinates
+            const x = Math.sin(angle) * radius;
+            const y = -Math.cos(angle) * radius; // Negative because CSS Y axis goes down
+            
+            // Create and position highlight
+            const highlight = document.createElement('div');
+            highlight.className = 'step-highlight';
+            highlight.textContent = stepId.toString().padStart(2, '0');
+            highlight.style.left = `calc(50% + ${x}px)`;
+            highlight.style.top = `calc(50% + ${y}px)`;
+            
+            document.querySelector('.dial-background').appendChild(highlight);
         }
 
         function selectInterventionProduct(product) {
